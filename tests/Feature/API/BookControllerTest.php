@@ -27,7 +27,8 @@ class BookControllerTest extends TestCase
             $json->whereAllType([
                 '0.id' => 'integer',
                 '0.title' => 'string',
-                '0.isbn' => 'string',
+                '0.author' => 'string',
+                '0.description' => 'string',
             ]);
         });
         
@@ -43,16 +44,52 @@ class BookControllerTest extends TestCase
 
         $response->assertJson(function(AssertableJson $json) use ($book){
 
-            $json->hasAll(['id','title','isbn','created_at', 'updated_at']);
+            $json->hasAll(['id','title','author', 'description','created_at', 'updated_at']);
             
             $json->whereAll([
                 'id' => $book->id,
                 'title' => $book->title,
-                'isbn' => $book->isbn,
+                'author' => $book->author,
+                'description' => $book->description,
             ]);
         });
     }
+    
+    public function test_the_field_title_book_is_required(): void
+    {
+        $response = $this->postJson('/api/books', []);
+        $response->assertStatus(422);
 
+        $response->assertJson(function(AssertableJson $json){
+
+            $json->hasAll(['errors', 'message'])->etc();
+            $json->where('errors.title.0', 'O Campo Title é obrigatório.');
+        });
+    }
+
+    public function test_the_field_author_book_is_required(): void
+    {
+        $response = $this->postJson('/api/books', []);
+        $response->assertStatus(422);
+
+        $response->assertJson(function(AssertableJson $json){
+
+            $json->hasAll(['errors', 'message'])->etc();
+            $json->where('errors.author.0', 'O Campo Author é obrigatório.');
+        });
+    }
+
+    public function test_the_field_description_book_is_required(): void
+    {
+        $response = $this->postJson('/api/books', []);
+        $response->assertStatus(422);
+
+        $response->assertJson(function(AssertableJson $json){
+
+            $json->hasAll(['errors', 'message'])->etc();
+            $json->where('errors.description.0', 'O Campo Description é obrigatório.');
+        });
+    }
     public function test_post_books_endpoint(): void
     {
 
@@ -62,10 +99,11 @@ class BookControllerTest extends TestCase
         $response->assertStatus(201);
         $response->assertJson(function(AssertableJson $json) use ($book){
 
-            $json->hasAll(['id', 'title', 'isbn'])->etc();
+            $json->hasAll(['id', 'title', 'author', 'description'])->etc();
             $json->whereAll([
                 'title' => $book['title'],
-                'isbn' => $book['isbn'],
+                'author' => $book['author'],
+                'description' => $book['description'],
             ])->etc();
         });
     }
@@ -75,17 +113,19 @@ class BookControllerTest extends TestCase
         Book::factory(1)->createOne();
         $book = [
             'title' => 'Updated Book',
-            'isbn' => '23154645'
+            'author' => 'Um nome qualquer',
+            'description' => 'Uma descrição qualquer'
         ];
         $response = $this->putJson('/api/books/1', $book);
         $response->assertStatus(200);
         
         $response->assertJson(function(AssertableJson $json) use ($book){
 
-            $json->hasAll(['id', 'title','isbn'])->etc();
+            $json->hasAll(['id', 'title','author', 'description'])->etc();
             $json->whereAll([
                 'title' => $book['title'],
-                'isbn' => $book['isbn'],
+                'author' => $book['author'],
+                'description' => $book['description'],
             ])->etc();
         });
     }
@@ -101,7 +141,7 @@ class BookControllerTest extends TestCase
         
         $response->assertJson(function(AssertableJson $json) use ($book){
 
-            $json->hasAll(['id', 'title','isbn'])->etc();
+            $json->hasAll(['id', 'title','author', 'description'])->etc();
             $json->whereAll([
                 'title' => $book['title'],
             ])->etc();
